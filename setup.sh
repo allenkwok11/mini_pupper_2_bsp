@@ -22,9 +22,9 @@ BASEDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 # check Ubuntu version
 source /etc/os-release
 
-if [[ $UBUNTU_CODENAME != 'jammy' ]]
+if [[ ! "$UBUNTU_CODENAME" =~ ^(focal|jammy|noble)$ ]]
 then
-    echo "Ubuntu 22.04 LTS (Jammy Jellyfish) is required"
+    echo "Ubuntu 20.04/22.04/24.04 LTS is required"
     echo "You are using $VERSION"
     exit 1
 fi

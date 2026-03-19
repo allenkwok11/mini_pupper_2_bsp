@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 from MangDang.mini_pupper.ESP32Interface import ESP32Interface
 from ahrs.filters import Madgwick
 from itertools import product, combinations

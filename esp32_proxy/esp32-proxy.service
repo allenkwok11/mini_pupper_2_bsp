@@ -5,7 +5,7 @@ Description=esp32 proxy service
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/var/lib/mini_pupper_bsp/esp32-proxy
-User=ubuntu
+User=root
 
 [Install]
 WantedBy=sysinit.target

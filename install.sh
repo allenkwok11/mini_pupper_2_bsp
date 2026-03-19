@@ -2,6 +2,8 @@
 
 set -e
 
+source /etc/os-release
+
 sudo apt update
 sudo apt -y upgrade
 
@@ -51,12 +53,15 @@ grep -q "mini_pupper_v2" /etc/hosts || echo "127.0.0.1	mini_pupper_v2" | sudo te
 
 ### upgrade Ubuntu and install required packages
 echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
-sudo sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list
+if [ -f /etc/apt/sources.list ]
+then
+    sudo sed -i "s/# deb-src/deb-src/g" /etc/apt/sources.list
+fi
 #sudo apt update
 #sudo apt -y upgrade
 sudo apt install -y i2c-tools dpkg-dev curl python-is-python3 mpg321 python3-tk openssh-server screen alsa-utils libportaudio2 libsndfile1
 sudo sed -i "s/pulse/alsa/" /etc/libao.conf
-if [ $(lsb_release -cs) == "jammy" ]; then
+if [[ "$UBUNTU_CODENAME" == "jammy" || "$UBUNTU_CODENAME" == "noble" ]]; then
     sudo sed -i "s/cards.pcm.front/cards.pcm.default/" /usr/share/alsa/alsa.conf
 fi
 
@@ -80,9 +85,19 @@ done
 ### Install pip
 cd /tmp
 wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py
-sudo python get-pip.py
-sudo pip install setuptools==58.2.0 # temporary fix https://github.com/mangdangroboticsclub/mini_pupper_ros/pull/45#discussion_r1104759104
-sudo pip install sounddevice soundfile
+sudo python3 get-pip.py
+PIP_OPTS=()
+if [[ "$UBUNTU_CODENAME" == "noble" ]]
+then
+    PIP_OPTS+=(--break-system-packages)
+fi
+SETUPTOOLS_REQ="setuptools==58.2.0" # keep existing behavior for Ubuntu 20.04/22.04
+if [[ "$UBUNTU_CODENAME" == "noble" ]]
+then
+    SETUPTOOLS_REQ="setuptools"
+fi
+sudo python3 -m pip install "${PIP_OPTS[@]}" "$SETUPTOOLS_REQ" # temporary fix https://github.com/mangdangroboticsclub/mini_pupper_ros/pull/45#discussion_r1104759104
+sudo python3 -m pip install "${PIP_OPTS[@]}" sounddevice soundfile
 
 ### Install Python module
 sudo apt install -y python3-dev
@@ -95,9 +110,9 @@ else
 fi
 if [ "$IS_RELEASE" == "YES" ]
 then
-    sudo PBR_VERSION=$(cd $BASEDIR; ./get-version.sh) pip install $BASEDIR/$PYTHONMODLE
+    sudo PBR_VERSION=$(cd $BASEDIR; ./get-version.sh) python3 -m pip install "${PIP_OPTS[@]}" $BASEDIR/$PYTHONMODLE
 else
-    sudo pip install $BASEDIR/$PYTHONMODLE
+    sudo python3 -m pip install "${PIP_OPTS[@]}" $BASEDIR/$PYTHONMODLE
 fi
 
 # Install Camera

@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-To install esp-idf use a Ubuntu 22.04 environment:
+To install esp-idf use a Ubuntu 20.04/22.04/24.04 environment:
 
 ```
 cd ~

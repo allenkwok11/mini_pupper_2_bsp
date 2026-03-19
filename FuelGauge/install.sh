@@ -8,5 +8,6 @@ set -x
 BASEDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 sudo cp $BASEDIR/battery_monitor /usr/bin/
-sudo cp $BASEDIR/battery_monitor.service /lib/systemd/system/
+sudo cp $BASEDIR/battery_monitor.service /etc/systemd/system/
+sudo systemctl daemon-reload
 sudo systemctl enable  battery_monitor.service

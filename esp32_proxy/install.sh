@@ -12,5 +12,6 @@ make clean
 make
 
 sudo cp esp32-proxy /var/lib/mini_pupper_bsp/
-sudo cp esp32-proxy.service /lib/systemd/system/
+sudo cp esp32-proxy.service /etc/systemd/system/
+sudo systemctl daemon-reload
 sudo systemctl enable  esp32-proxy.service

@@ -19,6 +19,13 @@ sudo apt upgrade -y
 # Install v4l2, a video capture utility
 sudo apt install -y v4l-utils
 
+# Skip Raspberry Pi specific camera setup when firmware path is unavailable.
+if [ ! -d /boot/firmware ]
+then
+	echo "skip RPiCamera setup: /boot/firmware not found"
+	exit 0
+fi
+
 # Edit the /boot/firmware/config.txt file to enable camera support
 sudo sed -i 's/^camera_auto_detect=1/# camera_auto_detect=1/g' /boot/firmware/config.txt
 echo "gpu_mem=128" | sudo tee -a /boot/firmware/config.txt

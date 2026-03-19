@@ -14,8 +14,20 @@ fi
 # set cpu performance
 echo performance > /sys/bus/cpu/devices/cpu0/cpufreq/scaling_governor
 
-# check for reconfiguration request
-/home/ubuntu/mini_pupper_bsp/System/check-reconfigure.sh
+BSP_DIR=$(find /home -maxdepth 2 -type d -name mini_pupper_bsp 2>/dev/null | head -n 1)
+if [ -z "$BSP_DIR" ] && [ -d /root/mini_pupper_bsp ]
+then
+    BSP_DIR=/root/mini_pupper_bsp
+fi
 
-cardnums==$(aplay -l  | grep Headphones | cut -d ' ' -f 2 | cut -d ':' -f 1)
-mpg123 -a hw:$cardnums,0 /home/ubuntu/mini_pupper_bsp/Audio/power_on.mp3 &
+# check for reconfiguration request
+if [ -n "$BSP_DIR" ] && [ -x "$BSP_DIR/System/check-reconfigure.sh" ]
+then
+    "$BSP_DIR/System/check-reconfigure.sh"
+fi
+
+cardnums=$(aplay -l  | grep Headphones | cut -d ' ' -f 2 | cut -d ':' -f 1 | head -n 1)
+if [ -n "$cardnums" ] && [ -n "$BSP_DIR" ] && [ -f "$BSP_DIR/Audio/power_on.mp3" ]
+then
+    mpg123 -a hw:$cardnums,0 "$BSP_DIR/Audio/power_on.mp3" &
+fi

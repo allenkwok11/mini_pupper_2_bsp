@@ -6,5 +6,6 @@ sudo apt-get remove -y ubuntu-release-upgrader-core
 sudo chmod 440 sudoers
 sudo cp sudoers  /etc/
 sudo cp rc.local /etc/
-sudo cp rc-local.service /lib/systemd/system/
+sudo cp rc-local.service /etc/systemd/system/
+sudo systemctl daemon-reload
 sudo systemctl enable rc-local
