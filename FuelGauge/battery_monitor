@@ -8,9 +8,13 @@ from pathlib import Path
 
 def find_bsp_script():
     candidates = sorted(Path('/home').glob('*/mini_pupper_bsp/FuelGauge/play-low-power-sound.sh'))
+    candidates += sorted(Path('/home').glob('*/mini_pupper_2_bsp/FuelGauge/play-low-power-sound.sh'))
     if candidates:
         return str(candidates[0])
     fallback = Path('/root/mini_pupper_bsp/FuelGauge/play-low-power-sound.sh')
+    if fallback.exists():
+        return str(fallback)
+    fallback = Path('/root/mini_pupper_2_bsp/FuelGauge/play-low-power-sound.sh')
     if fallback.exists():
         return str(fallback)
     return None

@@ -21,8 +21,8 @@ then
 else
     echo BUILD_SCRIPT=\"$(cd ~; ls *build.sh)\" >> ~/mini-pupper-release
 fi
-echo BSP_VERSION=\"$(cd ~/mini_pupper_bsp; ./get-version.sh)\" >> ~/mini-pupper-release
-cd ~/mini_pupper_bsp
+echo BSP_VERSION=\"$(cd $BASEDIR; ./get-version.sh)\" >> ~/mini-pupper-release
+cd $BASEDIR
 TAG_COMMIT=$(git rev-list --abbrev-commit --tags --max-count=1)
 TAG=$(git describe --abbrev=0 --tags ${TAG_COMMIT} 2>/dev/null || true)
 BSP_VERSION=$(./get-version.sh)
@@ -60,7 +60,11 @@ fi
 #sudo apt update
 #sudo apt -y upgrade
 sudo apt install -y i2c-tools dpkg-dev curl python-is-python3 mpg321 python3-tk openssh-server screen alsa-utils libportaudio2 libsndfile1
-sudo sed -i "s/pulse/alsa/" /etc/libao.conf
+if [ ! -f /etc/libao.conf ]
+then
+    sudo apt install -y libao-common libao4 || true
+fi
+[ -f /etc/libao.conf ] && sudo sed -i "s/pulse/alsa/" /etc/libao.conf
 if [[ "$UBUNTU_CODENAME" == "jammy" || "$UBUNTU_CODENAME" == "noble" ]]; then
     sudo sed -i "s/cards.pcm.front/cards.pcm.default/" /usr/share/alsa/alsa.conf
 fi
@@ -120,7 +124,7 @@ MACHINE=$(uname -m)
 if [ "$MACHINE" != "x86_64" ]
 # install script will break virtual installation
 then
-~/mini_pupper_bsp/RPiCamera/install.sh
+$BASEDIR/RPiCamera/install.sh
 fi
 
 ### Make pwm sysfs and nvmem work for non-root users
@@ -130,7 +134,7 @@ getent group gpio || sudo groupadd gpio && sudo gpasswd -a $(whoami) gpio
 getent group dialout || sudo groupadd dialout && sudo gpasswd -a $(whoami) dialout
 getent group spi || sudo groupadd spi && sudo gpasswd -a $(whoami) spi
 sudo tee /etc/udev/rules.d/99-mini_pupper-gpio.rules << EOF > /dev/null
-KERNELS=="gpiochip0", SUBSYSTEM=="gpio", ACTION=="add", ATTR{label}=="pinctrl-bcm2711", RUN+="/usr/lib/udev/gpio-mini_pupper.sh"
+SUBSYSTEM=="gpio", ACTION=="add", ATTR{label}=="pinctrl-bcm2711", RUN+="/usr/lib/udev/gpio-mini_pupper.sh"
 KERNEL=="gpiomem", OWNER="root", GROUP="gpio", MODE="0660"
 EOF
 sudo tee /etc/udev/rules.d/99-mini_pupper-spi.rules << EOF > /dev/null
@@ -139,22 +143,30 @@ EOF
 
 sudo tee /usr/lib/udev/gpio-mini_pupper.sh << EOF > /dev/null
 #!/bin/bash
-# Board power
-echo 21 > /sys/class/gpio/export
-echo out > /sys/class/gpio/gpio21/direction
-chmod 666 /sys/class/gpio/gpio21/value
-echo 1 > /sys/class/gpio/gpio21/value
+GPIO_BASE=0
+if [ -d /sys/class/gpio/gpiochip512 ]; then
+    GPIO_BASE=512
+fi
 
-echo 25 > /sys/class/gpio/export
-echo out > /sys/class/gpio/gpio25/direction
-chmod 666 /sys/class/gpio/gpio25/value
-echo 1 > /sys/class/gpio/gpio25/value
+# Board power
+PIN=$((GPIO_BASE + 21))
+echo $PIN > /sys/class/gpio/export 2>/dev/null
+echo out > /sys/class/gpio/gpio${PIN}/direction
+chmod 666 /sys/class/gpio/gpio${PIN}/value
+echo 1 > /sys/class/gpio/gpio${PIN}/value
+
+PIN=$((GPIO_BASE + 25))
+echo $PIN > /sys/class/gpio/export 2>/dev/null
+echo out > /sys/class/gpio/gpio${PIN}/direction
+chmod 666 /sys/class/gpio/gpio${PIN}/value
+echo 1 > /sys/class/gpio/gpio${PIN}/value
 
 # LCD power
-echo 22 > /sys/class/gpio/export
-echo out > /sys/class/gpio/gpio22/direction
-chmod 666 /sys/class/gpio/gpio22/value
-echo 1 > /sys/class/gpio/gpio22/value
+PIN=$((GPIO_BASE + 22))
+echo $PIN > /sys/class/gpio/export 2>/dev/null
+echo out > /sys/class/gpio/gpio${PIN}/direction
+chmod 666 /sys/class/gpio/gpio${PIN}/value
+echo 1 > /sys/class/gpio/gpio${PIN}/value
 EOF
 sudo chmod +x /usr/lib/udev/gpio-mini_pupper.sh
 
