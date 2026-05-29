@@ -41,8 +41,17 @@ cd ~/mini_pupper_2_bsp/demos  # To demos directory
 python camera_ffplay_test.py  # run ffplay test demo
 ```
 -  Camera image
+
 Open a terminal and do the following command to get a picture, named snapshot.jpg
 ```bash
 ffmpeg -f video4linux2 -i /dev/video0 -frames:v 1 snapshot.jpg
 ```
 
+-  Camera shooting
+
+Open a terminal and run the following command to record a video named 'output.mp4'. The -s flag means resolution, and -r means framerate.
+Press 'q' in the terminal to stop recording and save the video.
+
+```bash
+ffmpeg -f video4linux2 -input_format mjpeg -s 1280x720 -r 30  -i /dev/video0 output.mp4
+```
