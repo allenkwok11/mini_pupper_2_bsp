@@ -129,9 +129,15 @@ done
 
 ### Configure and start esp32-proxy so Python APIs work right after install
 if [ "$MACHINE" != "x86_64" ]; then
-    # Detect available UART devices
+    # Detect available UART devices. CM5 routes the ESP32 link on GPIO4/5 to ttyAMA2.
+    MODEL="$(tr -d '\0' < /proc/device-tree/model 2>/dev/null || true)"
+    UART_CANDIDATES="/dev/serial0 /dev/ttyAMA0 /dev/ttyAMA2 /dev/ttyAMA3 /dev/ttyS0"
+    if echo "$MODEL" | grep -q "Compute Module 5"; then
+        UART_CANDIDATES="/dev/ttyAMA2 /dev/serial0 /dev/ttyAMA0 /dev/ttyAMA3 /dev/ttyS0"
+    fi
+
     AVAILABLE_UARTS=""
-    for dev in /dev/serial0 /dev/ttyAMA0 /dev/ttyAMA2 /dev/ttyAMA3 /dev/ttyS0; do
+    for dev in $UART_CANDIDATES; do
         if [ -c "$dev" ]; then
             AVAILABLE_UARTS="$AVAILABLE_UARTS $dev"
         fi
