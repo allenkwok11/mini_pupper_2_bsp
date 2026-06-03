@@ -259,11 +259,11 @@ fi
 getent group gpio || sudo groupadd gpio && sudo gpasswd -a $(whoami) gpio
 getent group dialout || sudo groupadd dialout && sudo gpasswd -a $(whoami) dialout
 getent group spi || sudo groupadd spi && sudo gpasswd -a $(whoami) spi
-# Pi 4 udev rule (pinctrl-bcm2711)
-# Support both old kernel (gpiochip0) and kernel 6.8+ (gpiochip512)
+# Pi 4/CM4 uses pinctrl-bcm2711; Pi 5/CM5 uses pinctrl-rp1.
 sudo tee /etc/udev/rules.d/99-mini_pupper-gpio.rules << EOF > /dev/null
-SUBSYSTEM=="gpio", ACTION=="add", ATTR{label}=="pinctrl-bcm2711", RUN+="/usr/lib/udev/gpio-mini_pupper.sh"
-KERNEL=="gpiomem", OWNER="root", GROUP="gpio", MODE="0660"
+SUBSYSTEM=="gpio", ACTION=="add", DRIVERS=="pinctrl-bcm2711", OWNER="root", GROUP="gpio", MODE="0660", RUN+="/usr/lib/udev/gpio-mini_pupper.sh"
+SUBSYSTEM=="gpio", ACTION=="add", DRIVERS=="pinctrl-rp1", OWNER="root", GROUP="gpio", MODE="0660", RUN+="/usr/lib/udev/gpio-mini_pupper.sh"
+KERNEL=="gpiomem*", OWNER="root", GROUP="gpio", MODE="0660"
 EOF
 sudo tee /etc/udev/rules.d/99-mini_pupper-spi.rules << EOF > /dev/null
 KERNEL=="spidev0.0", OWNER="root", GROUP="spi", MODE="0660"
@@ -271,9 +271,21 @@ EOF
 
 sudo tee /usr/lib/udev/gpio-mini_pupper.sh << 'EOF' > /dev/null
 #!/bin/bash
-GPIO_BASE=0
-if [ -d /sys/class/gpio/gpiochip512 ]; then
-    GPIO_BASE=512
+GPIO_BASE=
+for CHIP in /sys/class/gpio/gpiochip*; do
+    [ -e "$CHIP/label" ] || continue
+    LABEL=$(cat "$CHIP/label")
+    if [ "$LABEL" = "pinctrl-rp1" ] || [ "$LABEL" = "pinctrl-bcm2711" ]; then
+        GPIO_BASE=${CHIP##*/gpiochip}
+        break
+    fi
+done
+
+if [ -z "$GPIO_BASE" ]; then
+    GPIO_BASE=0
+    if [ -d /sys/class/gpio/gpiochip512 ]; then
+        GPIO_BASE=512
+    fi
 fi
 
 # Board power
